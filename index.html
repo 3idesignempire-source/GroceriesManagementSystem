@@ -203,17 +203,18 @@
             groceries: []
         };
 
-        // Fetch Data from Firebase Realtime Database
+        // Fetch Data from Firebase Realtime Database (Once on Login to prevent UI freeze)
         function fetchFirebaseData() {
-            db.ref('groceryData').on('value', (snapshot) => {
+            db.ref('groceryData').once('value').then((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     appData.shops = data.shops || ["99 Speedmart", "NSK", "Semparuthi Confectionery"];
                     appData.groceries = data.groceries || [];
                 }
                 initApp();
-            }, (error) => {
+            }).catch((error) => {
                 console.error("Error fetching data: ", error);
+                initApp();
             });
         }
 
