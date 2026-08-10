@@ -358,6 +358,7 @@
                 name: name,
                 shop: shop,
                 lastPurchasedDate: new Date().toISOString().split('T')[0],
+                quantity: "",
                 readyToBuy: false
             };
 
@@ -415,13 +416,13 @@
             }
         }
 
-        function updatePurchaseDate(id, newDate) {
+        function updatePurchaseInfo(id, newDate, newQty) {
             const item = appData.groceries.find(g => String(g.id) === String(id));
-            if (item && newDate) {
-                item.lastPurchasedDate = newDate;
-                item.readyToBuy = false; // Reset ready to buy status after updating date
+            if (item) {
+                if (newDate !== undefined) item.lastPurchasedDate = newDate;
+                if (newQty !== undefined) item.quantity = newQty;
+                item.readyToBuy = false; // Reset ready to buy status after updating
                 saveFirebaseData();
-                renderDashboard();
             }
         }
 
@@ -495,15 +496,21 @@
                             </label>
                         </div>
                         <h4 class="text-lg font-bold text-gray-800 mb-1">${item.name}</h4>
-                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
                             <span class="px-2 py-0.5 rounded-full text-xs font-bold border ${badgeColor}">
                                 ${daysAgo} Days Ago
                             </span>
                         </div>
                     </div>
-                    <div class="pt-3 border-t flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-600"><i class="fa-solid fa-calendar-days mr-1 text-blue-600"></i> Purchased Date:</span>
-                        <input type="date" value="${item.lastPurchasedDate}" class="px-2 py-1 border rounded-lg text-xs font-medium outline-none bg-gray-50 focus:ring-1 focus:ring-blue-500 date-input">
+                    <div class="pt-3 border-t space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-600"><i class="fa-solid fa-calendar-days mr-1 text-blue-600"></i> Date:</span>
+                            <input type="date" value="${item.lastPurchasedDate}" class="px-2 py-1 border rounded-lg text-xs font-medium outline-none bg-gray-50 focus:ring-1 focus:ring-blue-500 date-input">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-600"><i class="fa-solid fa-sort-numeric-up mr-1 text-emerald-600"></i> Quantity:</span>
+                            <input type="text" value="${item.quantity || ''}" placeholder="e.g. 1 Kg / 2 Pkts" class="px-2 py-1 border rounded-lg text-xs font-medium outline-none bg-gray-50 focus:ring-1 focus:ring-blue-500 w-32 qty-input">
+                        </div>
                     </div>
                 `;
 
@@ -513,7 +520,11 @@
                 });
 
                 card.querySelector('.date-input').addEventListener('change', (e) => {
-                    updatePurchaseDate(item.id, e.target.value);
+                    updatePurchaseInfo(item.id, e.target.value, undefined);
+                });
+
+                card.querySelector('.qty-input').addEventListener('input', (e) => {
+                    updatePurchaseInfo(item.id, undefined, e.target.value);
                 });
 
                 container.appendChild(card);
