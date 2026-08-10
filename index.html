@@ -127,12 +127,26 @@
                 <!-- Filters Bar -->
                 <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <!-- Shop Filter -->
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">Filter by Shop</label>
                             <select id="filterShopSelect" onchange="renderDashboard()" class="px-3 py-2 border rounded-lg text-sm outline-none bg-gray-50 font-medium">
                                 <option value="ALL">All Shops</option>
                             </select>
                         </div>
+
+                        <!-- Days Filter -->
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Filter by Days Ago</label>
+                            <select id="filterDaysSelect" onchange="renderDashboard()" class="px-3 py-2 border rounded-lg text-sm outline-none bg-gray-50 font-medium">
+                                <option value="ALL">All Days</option>
+                                <option value="10">More than 10 Days</option>
+                                <option value="20">More than 20 Days</option>
+                                <option value="30">More than 30 Days</option>
+                            </select>
+                        </div>
+
+                        <!-- Ready to Buy Checkbox Filter -->
                         <div class="flex items-center mt-5">
                             <label class="flex items-center space-x-2 cursor-pointer bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg text-sm text-amber-800">
                                 <input type="checkbox" id="readyToBuyFilter" onchange="renderDashboard()" class="w-4 h-4 text-blue-600 rounded">
@@ -404,6 +418,7 @@
         function renderDashboard() {
             const container = document.getElementById('dashboardGroceryList');
             const selectedShop = document.getElementById('filterShopSelect').value;
+            const selectedDays = document.getElementById('filterDaysSelect').value;
             const readyOnly = document.getElementById('readyToBuyFilter').checked;
             const countSpan = document.getElementById('totalItemsCount');
 
@@ -414,7 +429,15 @@
             let filtered = appData.groceries.filter(item => {
                 let shopMatch = (selectedShop === 'ALL' || item.shop === selectedShop);
                 let readyMatch = (!readyOnly || item.readyToBuy === true);
-                return shopMatch && readyMatch;
+                
+                let daysAgo = calculateDaysAgo(item.lastPurchasedDate);
+                let daysMatch = true;
+                if (selectedDays !== 'ALL') {
+                    let minDays = parseInt(selectedDays);
+                    daysMatch = (daysAgo > minDays);
+                }
+
+                return shopMatch && readyMatch && daysMatch;
             });
 
             countSpan.textContent = filtered.length;
