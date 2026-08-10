@@ -397,7 +397,7 @@
         }
 
         function toggleReadyToBuy(id) {
-            const item = appData.groceries.find(g => g.id === id);
+            const item = appData.groceries.find(g => g.id === Number(id));
             if (item) {
                 item.readyToBuy = !item.readyToBuy;
                 saveFirebaseData();
@@ -406,7 +406,7 @@
         }
 
         function buyItemToday(id) {
-            const item = appData.groceries.find(g => g.id === id);
+            const item = appData.groceries.find(g => g.id === Number(id));
             if (item) {
                 item.lastPurchasedDate = new Date().toISOString().split('T')[0];
                 item.readyToBuy = false; // Reset status after buying
