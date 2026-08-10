@@ -352,7 +352,7 @@
             if (!shop) return alert('Please select a shop!');
 
             const newGrocery = {
-                id: Date.now(),
+                id: String(Date.now()),
                 name: name,
                 shop: shop,
                 lastPurchasedDate: new Date().toISOString().split('T')[0],
@@ -367,7 +367,7 @@
         }
 
         function deleteGrocery(id) {
-            appData.groceries = appData.groceries.filter(g => g.id !== id);
+            appData.groceries = appData.groceries.filter(g => String(g.id) !== String(id));
             saveFirebaseData();
             renderMasterGroceries();
             renderDashboard();
@@ -388,7 +388,7 @@
                         <td class="p-3 font-semibold text-gray-800">${item.name}</td>
                         <td class="p-3"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold">${item.shop}</span></td>
                         <td class="p-3 text-center">
-                            <button onclick="deleteGrocery(${item.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="deleteGrocery('${item.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -406,7 +406,7 @@
         }
 
         function toggleReadyToBuy(id) {
-            const item = appData.groceries.find(g => g.id === Number(id));
+            const item = appData.groceries.find(g => String(g.id) === String(id));
             if (item) {
                 item.readyToBuy = !item.readyToBuy;
                 saveFirebaseData();
@@ -415,7 +415,7 @@
         }
 
         function buyItemToday(id) {
-            const item = appData.groceries.find(g => g.id === Number(id));
+            const item = appData.groceries.find(g => String(g.id) === String(id));
             if (item) {
                 item.lastPurchasedDate = new Date().toISOString().split('T')[0];
                 item.readyToBuy = false; // Reset status after buying
@@ -485,7 +485,7 @@
                             <div class="flex justify-between items-start mb-2">
                                 <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded">${item.shop}</span>
                                 <label class="flex items-center space-x-1.5 text-xs text-gray-600 cursor-pointer bg-gray-50 px-2 py-1 rounded border">
-                                    <input type="checkbox" ${item.readyToBuy ? 'checked' : ''} onchange="toggleReadyToBuy(${item.id})" class="rounded text-blue-600">
+                                    <input type="checkbox" ${item.readyToBuy ? 'checked' : ''} onchange="toggleReadyToBuy('${item.id}')" class="rounded text-blue-600">
                                     <span class="font-medium">Ready to Buy</span>
                                 </label>
                             </div>
@@ -498,7 +498,7 @@
                             </div>
                         </div>
                         <div class="pt-2 border-t flex justify-end">
-                            <button onclick="buyItemToday(${item.id})" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center shadow-sm transition">
+                            <button onclick="buyItemToday('${item.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center shadow-sm transition">
                                 <i class="fa-solid fa-cart-arrow-down mr-1.5"></i> Buy Today
                             </button>
                         </div>
