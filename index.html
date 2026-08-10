@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen">
 
@@ -19,11 +23,11 @@
                     <i class="fa-solid fa-cart-shopping"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-gray-800">Grocery Manager</h1>
-                <p class="text-sm text-gray-500">உங்களின் மளிகை மேலாண்மை செயலி</p>
+                <p class="text-sm text-gray-500">Your personal grocery management system</p>
             </div>
             
             <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm text-center">
-                தவறான யூசர் நேம் அல்லது பாஸ்வேர்ட்! (Admin / 12345)
+                Invalid Username or Password! (admin / 12345)
             </div>
 
             <div class="space-y-4">
@@ -150,20 +154,48 @@
         </main>
     </div>
 
-    <!-- JavaScript Application Logic -->
+    <!-- JavaScript Application Logic with Firebase -->
     <script>
-        // --- DATA STATE (Local Storage Based - Firebase Ready) ---
-        let appData = {
-            shops: JSON.parse(localStorage.getItem('grocery_shops')) || ["99 Speedmart", "NSK", "Semparuthi Confectionery"],
-            groceries: JSON.parse(localStorage.getItem('grocery_items')) || [
-                { id: 1, name: "Cooking Oil", shop: "99 Speedmart", lastPurchasedDate: "2026-08-01", readyToBuy: true },
-                { id: 2, name: "Rice 10kg", shop: "NSK", lastPurchasedDate: "2026-07-15", readyToBuy: false }
-            ]
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL",
+            projectId: "YOUR_FIREBASE_PROJECT_ID",
+            storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+            appId: "YOUR_FIREBASE_APP_ID"
         };
 
-        function saveData() {
-            localStorage.setItem('grocery_shops', JSON.stringify(appData.shops));
-            localStorage.setItem('grocery_items', JSON.stringify(appData.groceries));
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // --- DATA STATE ---
+        let appData = {
+            shops: ["99 Speedmart", "NSK", "Semparuthi Confectionery"],
+            groceries: []
+        };
+
+        // Fetch Data from Firebase Realtime Database on load
+        function fetchFirebaseData() {
+            db.ref('groceryData').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    appData.shops = data.shops || ["99 Speedmart", "NSK", "Semparuthi Confectionery"];
+                    appData.groceries = data.groceries || [];
+                }
+                initApp();
+            }, (error) => {
+                console.error("Error fetching data: ", error);
+            });
+        }
+
+        function saveFirebaseData() {
+            db.ref('groceryData').set(appData).catch((error) => {
+                console.error("Error saving data: ", error);
+                alert("Failed to save data to Firebase!");
+            });
         }
 
         // --- AUTHENTICATION ---
@@ -174,7 +206,7 @@
             if (user === "admin" && pass === "12345") {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
-                initApp();
+                fetchFirebaseData();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
@@ -240,11 +272,11 @@
             const shopInput = document.getElementById('shopInput');
             const shopName = shopInput.value.trim();
 
-            if (!shopName) return alert('கடையின் பெயரை உள்ளிடவும்!');
-            if (appData.shops.includes(shopName)) return alert('இந்தக் கடை ஏற்கனவே உள்ளது!');
+            if (!shopName) return alert('Please enter shop name!');
+            if (appData.shops.includes(shopName)) return alert('This shop already exists!');
 
             appData.shops.push(shopName);
-            saveData();
+            saveFirebaseData();
             shopInput.value = '';
             renderConfigShops();
             updateDropdowns();
@@ -253,7 +285,7 @@
         function deleteShop(shopName) {
             if (confirm(`Are you sure you want to delete ${shopName}?`)) {
                 appData.shops = appData.shops.filter(s => s !== shopName);
-                saveData();
+                saveFirebaseData();
                 renderConfigShops();
                 updateDropdowns();
             }
@@ -263,7 +295,7 @@
             const shopList = document.getElementById('shopList');
             shopList.innerHTML = '';
 
-            if (appData.shops.length === 0) {
+            if (!appData.shops || appData.shops.length === 0) {
                 shopList.innerHTML = '<p class="text-sm text-gray-400">No shops added yet.</p>';
                 return;
             }
@@ -286,8 +318,8 @@
             const name = nameInput.value.trim();
             const shop = shopSelect.value;
 
-            if (!name) return alert('பொருளின் பெயரை உள்ளிடவும்!');
-            if (!shop) return alert('கடையைத் தேர்ந்தெடுக்கவும்!');
+            if (!name) return alert('Please enter grocery name!');
+            if (!shop) return alert('Please select a shop!');
 
             const newGrocery = {
                 id: Date.now(),
@@ -297,15 +329,16 @@
                 readyToBuy: false
             };
 
+            if (!appData.groceries) appData.groceries = [];
             appData.groceries.push(newGrocery);
-            saveData();
+            saveFirebaseData();
             nameInput.value = '';
             renderMasterGroceries();
         }
 
         function deleteGrocery(id) {
             appData.groceries = appData.groceries.filter(g => g.id !== id);
-            saveData();
+            saveFirebaseData();
             renderMasterGroceries();
             renderDashboard();
         }
@@ -314,7 +347,7 @@
             const masterList = document.getElementById('masterGroceryList');
             masterList.innerHTML = '';
 
-            if (appData.groceries.length === 0) {
+            if (!appData.groceries || appData.groceries.length === 0) {
                 masterList.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400">No groceries configured.</td></tr>';
                 return;
             }
@@ -346,7 +379,7 @@
             const item = appData.groceries.find(g => g.id === id);
             if (item) {
                 item.readyToBuy = !item.readyToBuy;
-                saveData();
+                saveFirebaseData();
                 renderDashboard();
             }
         }
@@ -356,7 +389,7 @@
             if (item) {
                 item.lastPurchasedDate = new Date().toISOString().split('T')[0];
                 item.readyToBuy = false; // Reset status after buying
-                saveData();
+                saveFirebaseData();
                 renderDashboard();
             }
         }
@@ -368,6 +401,8 @@
             const countSpan = document.getElementById('totalItemsCount');
 
             container.innerHTML = '';
+
+            if (!appData.groceries) appData.groceries = [];
 
             let filtered = appData.groceries.filter(item => {
                 let shopMatch = (selectedShop === 'ALL' || item.shop === selectedShop);
