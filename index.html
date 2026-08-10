@@ -140,6 +140,7 @@
                             <label class="block text-xs text-gray-500 mb-1">Filter by Days Ago</label>
                             <select id="filterDaysSelect" onchange="renderDashboard()" class="px-3 py-2 border rounded-lg text-sm outline-none bg-gray-50 font-medium">
                                 <option value="ALL">All Days</option>
+                                <option value="0-10">0 to 10 Days</option>
                                 <option value="10">More than 10 Days</option>
                                 <option value="20">More than 20 Days</option>
                                 <option value="30">More than 30 Days</option>
@@ -443,7 +444,9 @@
                 
                 let daysAgo = calculateDaysAgo(item.lastPurchasedDate);
                 let daysMatch = true;
-                if (selectedDays !== 'ALL') {
+                if (selectedDays === '0-10') {
+                    daysMatch = (daysAgo >= 0 && daysAgo <= 10);
+                } else if (selectedDays !== 'ALL') {
                     let minDays = parseInt(selectedDays);
                     daysMatch = (daysAgo > minDays);
                 }
