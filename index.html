@@ -3,87 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grocery Management System</title>
+    <title>Smart Grocery Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen">
 
-    <!-- Login Screen -->
     <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-            <h1 class="text-2xl font-bold text-center mb-6">Grocery Manager Login</h1>
-            <input type="text" id="username" value="admin" class="w-full px-4 py-2 border rounded-lg mb-4 outline-none" placeholder="Username">
-            <input type="password" id="password" value="12345" class="w-full px-4 py-2 border rounded-lg mb-4 outline-none" placeholder="Password">
-            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700">Login</button>
+            <div class="text-center mb-6">
+                <div class="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Grocery Manager</h1>
+                <p class="text-sm text-gray-500">Your personal grocery management system</p>
+            </div>
+            
+            <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm text-center">
+                Invalid Username or Password! (admin / 12345)
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="username" value="admin" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" value="12345" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">
+                    Login
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="mainApp" class="hidden min-h-screen">
-        <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
-            <h2 class="font-bold text-xl">My Groceries</h2>
-            <div class="space-x-2">
-                <button onclick="switchTab('dashboard')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-bold">Home</button>
-                <button onclick="switchTab('config')" class="px-3 py-1 bg-gray-100 rounded-lg text-sm font-bold">Config</button>
-                <button onclick="handleLogout()" class="text-red-500"><i class="fa-solid fa-right-from-bracket"></i></button>
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <header class="bg-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-basket-shopping text-blue-600 text-2xl"></i>
+                    <h2 class="text-xl font-bold text-gray-800">My Groceries</h2>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="switchTab('dashboard')" id="navDashBtn" class="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-700 transition">
+                        <i class="fa-solid fa-house mr-1"></i> Home / Buy
+                    </button>
+                    <button onclick="switchTab('config')" id="navConfigBtn" class="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">
+                        <i class="fa-solid fa-gear mr-1"></i> Configuration
+                    </button>
+                    <button onclick="handleLogout()" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <main class="max-w-xl mx-auto p-4 space-y-4">
-            <!-- Config Tab -->
-            <div id="configTab" class="hidden space-y-4">
-                <div class="bg-white p-4 rounded-xl shadow border">
-                    <h4 class="font-bold mb-2">Shops & Groceries Config</h4>
-                    <div class="flex gap-2 mb-2"><input type="text" id="shopInput" class="border p-2 w-full rounded" placeholder="New Shop"><button onclick="addShop()" class="bg-blue-600 text-white px-4 rounded">Add Shop</button></div>
-                    <input type="text" id="groceryNameInput" class="border p-2 w-full rounded mb-2" placeholder="Grocery Name">
-                    <select id="groceryShopSelect" class="border p-2 w-full rounded mb-2"></select>
-                    <button onclick="addGrocery()" class="w-full bg-green-600 text-white p-2 rounded">Add Grocery Item</button>
-                </div>
-            </div>
-
-            <!-- Dashboard Tab -->
-            <div id="dashboardTab" class="space-y-4">
-                <!-- 1. Search Box (Top) -->
-                <div class="bg-white p-4 rounded-xl shadow border">
-                    <input type="text" id="searchGroceryInput" oninput="renderDashboard()" placeholder="🔍 Search grocery item by name..." class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-
-                <hr class="border-t-2 border-gray-300">
-
-                <!-- 2. Filters & Sort Box -->
-                <div class="bg-white p-4 rounded-xl shadow border space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <select id="filterShopSelect" onchange="renderDashboard()" class="p-2 border rounded text-sm"></select>
-                        <select id="filterDaysSelect" onchange="renderDashboard()" class="p-2 border rounded text-sm">
-                            <option value="ALL">All Days</option>
-                            <option value="0-10">0 to 10 Days</option>
-                            <option value="10">More than 10 Days</option>
-                            <option value="20">More than 20 Days</option>
-                            <option value="30">More than 30 Days</option>
-                        </select>
+        <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+            
+            <div id="configTab" class="hidden space-y-6">
+                <h3 class="text-xl font-bold text-gray-800 border-b pb-2"><i class="fa-solid fa-sliders mr-2"></i> Settings & Configurations</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border">
+                        <h4 class="font-bold text-gray-700 mb-3"><i class="fa-solid fa-store mr-2 text-blue-600"></i> 1. Shops Configuration</h4>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="shopInput" placeholder="Enter Shop Name (e.g. 99 Speedmart)" class="flex-grow px-3 py-2 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500">
+                            <button onclick="addShop()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700">Add Shop</button>
+                        </div>
+                        <div id="shopList" class="space-y-2 max-h-48 overflow-y-auto">
+                            </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <select id="sortDaysSelect" onchange="renderDashboard()" class="p-2 border rounded text-sm">
-                            <option value="asc">Asc: Low to High Days</option>
-                            <option value="desc">Desc: High to Low Days</option>
-                        </select>
-                        <label class="flex items-center space-x-2 bg-amber-50 p-2 rounded border border-amber-200">
-                            <input type="checkbox" id="readyToBuyFilter" onchange="renderDashboard()"> <span class="text-sm font-bold">Ready to Buy</span>
-                        </label>
+
+                    <div class="bg-white p-5 rounded-xl shadow-sm border">
+                        <h4 class="font-bold text-gray-700 mb-3"><i class="fa-solid fa-carrot mr-2 text-green-600"></i> 2. Groceries Configuration</h4>
+                        <div class="space-y-3 mb-4">
+                            <input type="text" id="groceryNameInput" placeholder="Grocery Name (e.g. Cooking Oil)" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500">
+                            <select id="groceryShopSelect" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="">Select Shop</option>
+                            </select>
+                            <button onclick="addGrocery()" class="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700">Add Grocery Item</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3. List display (Below filters) -->
-                <div id="dashboardGroceryList" class="space-y-3"></div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                    <h4 class="font-bold text-gray-700 mb-3"><i class="fa-solid fa-list mr-2 text-indigo-600"></i> All Configured Groceries</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b text-sm text-gray-600">
+                                    <th class="p-3">Grocery Item</th>
+                                    <th class="p-3">Associated Shop</th>
+                                    <th class="p-3 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masterGroceryList" class="text-sm text-gray-700">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
+            <div id="dashboardTab" class="space-y-6">
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="searchGroceryInput" oninput="renderDashboard()" placeholder="Search grocery item by name..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm outline-none bg-gray-50 focus:ring-1 focus:ring-blue-500 font-medium">
+                    </div>
+                </div>
+
+                <hr class="border-t-2 border-gray-200 my-2">
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Filter by Shop</label>
+                                <select id="filterShopSelect" onchange="renderDashboard()" class="px-3 py-2 border rounded-lg text-sm outline-none bg-gray-50 font-medium">
+                                    <option value="ALL">All Shops</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Filter by Days Ago</label>
+                                <select id="filterDaysSelect" onchange="renderDashboard()" class="px-3 py-2 border rounded-lg text-sm outline-none bg-gray-50 font-medium">
+                                    <option value="ALL">All Days</option>
+                                    <option value="0-10">0 to 10 Days</option>
+                                    <option value="10">More than 10 Days</option>
+                                    <option value="20">More than 20 Days</option>
+                                    <option value="30">More than 30 Days</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Sort by Days</label>
+                                <select id="sortDaysSelect" onchange="renderDashboard()" class="px-3 py-2 border rounded-lg text-sm outline-none bg-gray-50 font-medium">
+                                    <option value="asc">Ascending (Low to High)</option>
+                                    <option value="desc">Descending (High to Low)</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center mt-5">
+                                <label class="flex items-center space-x-2 cursor-pointer bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg text-sm text-amber-800">
+                                    <input type="checkbox" id="readyToBuyFilter" onchange="renderDashboard()" class="w-4 h-4 text-blue-600 rounded">
+                                    <span class="font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Ready to Buy Only</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500 font-medium">
+                            Total Items: <span id="totalItemsCount" class="text-blue-600 font-bold">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dashboardGroceryList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+            </div>
+
         </main>
     </div>
 
     <script>
-        // ... (ஜாவாஸ்கிரிப்ட் லாஜிக் முந்தைய கோடின்படியே அப்படியே பயன்படுத்தவும், இது கச்சிதமாக வேலை செய்யும்) ...
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4m2lTvc9nzvl4Rp0kwRfBuFS64_c_j1I",
+            authDomain: "groceriesmanagementsystem.firebaseapp.com",
+            databaseURL: "https://groceriesmanagementsystem-default-rtdb.firebaseio.com",
+            projectId: "groceriesmanagementsystem",
+            storageBucket: "groceriesmanagementsystem.firebasestorage.app",
+            messagingSenderId: "827574928434",
+            appId: "1:827574928434:web:d63c22e4f194389f74282b",
+            measurementId: "G-2XTDJ3EG4X"
+        };
+
+        // Initialize Firebase safely
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // --- DATA STATE ---
+        let appData = {
+            shops: ["99 Speedmart", "NSK", "Semparuthi Confectionery"],
+            groceries: []
+        };
+
+        // Fetch Data from Firebase Realtime Database (Once on Login)
+        function fetchFirebaseData() {
+            db.ref('groceryData').once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    appData.shops = data.shops || ["99 Speedmart", "NSK", "Semparuthi Confectionery"];
+                    appData.groceries = data.groceries || [];
+                }
+                initApp();
+            }).catch((error) => {
+                console.error("Error fetching data: ", error);
+                initApp();
+            });
+        }
+
+        function saveFirebaseData() {
+            db.ref('groceryData').set(appData).catch((error) => {
+                console.error("Error saving data: ", error);
+                alert("Failed to save data to Firebase! Please check database rules.");
+            });
+        }
+
+        // --- AUTHENTICATION ---
+        function handleLogin() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            
+            if (user === "admin" && pass === "12345") {
+                document.getElementById('loginError').classList.add('hidden');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                fetchFirebaseData();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = '12345';
+        }
+
+        // --- INITIALIZE APP ---
+        function initApp() {
+            updateDropdowns();
+            renderConfigShops();
+            renderMasterGroceries();
+            renderDashboard();
+        }
+
+        // --- TAB SWITCHING ---
+        function switchTab(tabName) {
+            const dashTab = document.getElementById('dashboardTab');
+            const configTab = document.getElementById('configTab');
+            const dashBtn = document.getElementById('navDashBtn');
+            const configBtn = document.getElementById('navConfigBtn');
+
+            if (tabName === 'dashboard') {
+                dashTab.classList.remove('hidden');
+                configTab.classList.add('hidden');
+                dashBtn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-700 transition";
+                configBtn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition";
+                renderDashboard();
+            } else {
+                dashTab.classList.add('hidden');
+                configTab.classList.remove('hidden');
+                configBtn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-700 transition";
+                dashBtn.className = "px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition";
+                renderConfigShops();
+                renderMasterGroceries();
+            }
+        }
+
+        // --- DROPDOWNS UPDATER ---
+        function updateDropdowns() {
+            const groceryShopSelect = document.getElementById('groceryShopSelect');
+            const filterShopSelect = document.getElementById('filterShopSelect');
+
+            let shopOptions = '<option value="">Select Shop</option>';
+            let filterOptions = '<option value="ALL">All Shops</option>';
+
+            if (appData.shops) {
+                appData.shops.forEach(shop => {
+                    shopOptions += `<option value="${shop}">${shop}</option>`;
+                    filterOptions += `<option value="${shop}">${shop}</option>`;
+                });
+            }
+
+            groceryShopSelect.innerHTML = shopOptions;
+            filterShopSelect.innerHTML = filterOptions;
+        }
+
+        // --- CONFIG: SHOPS MANAGEMENT ---
+        function addShop() {
+            const shopInput = document.getElementById('shopInput');
+            const shopName = shopInput.value.trim();
+
+            if (!shopName) return alert('Please enter shop name!');
+            if (!appData.shops) appData.shops = [];
+            if (appData.shops.includes(shopName)) return alert('This shop already exists!');
+
+            appData.shops.push(shopName);
+            saveFirebaseData();
+            shopInput.value = '';
+            renderConfigShops();
+            updateDropdowns();
+        }
+
+        function deleteShop(shopName) {
+            if (confirm(`Are you sure you want to delete ${shopName}?`)) {
+                appData.shops = appData.shops.filter(s => s !== shopName);
+                saveFirebaseData();
+                renderConfigShops();
+                updateDropdowns();
+            }
+        }
+
+        function renderConfigShops() {
+            const shopList = document.getElementById('shopList');
+            shopList.innerHTML = '';
+
+            if (!appData.shops || appData.shops.length === 0) {
+                shopList.innerHTML = '<p class="text-sm text-gray-400">No shops added yet.</p>';
+                return;
+            }
+
+            appData.shops.forEach(shop => {
+                shopList.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg border text-sm">
+                        <span class="font-medium text-gray-700"><i class="fa-solid fa-store text-gray-400 mr-2"></i> ${shop}</span>
+                        <button onclick="deleteShop('${shop}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        // --- CONFIG: GROCERIES MANAGEMENT ---
+        function addGrocery() {
+            const nameInput = document.getElementById('groceryNameInput');
+            const shopSelect = document.getElementById('groceryShopSelect');
+            
+            const name = nameInput.value.trim();
+            const shop = shopSelect.value;
+
+            if (!name) return alert('Please enter grocery name!');
+            if (!shop) return alert('Please select a shop!');
+
+            const newGrocery = {
+                id: String(Date.now()),
+                name: name,
+                shop: shop,
+                lastPurchasedDate: new Date().toISOString().split('T')[0],
+                quantity: "",
+                readyToBuy: false
+            };
+
+            if (!appData.groceries) appData.groceries = [];
+            appData.groceries.push(newGrocery);
+            saveFirebaseData();
+            nameInput.value = '';
+            renderMasterGroceries();
+        }
+
+        function deleteGrocery(id) {
+            appData.groceries = appData.groceries.filter(g => String(g.id) !== String(id));
+            saveFirebaseData();
+            renderMasterGroceries();
+            renderDashboard();
+        }
+
+        function renderMasterGroceries() {
+            const masterList = document.getElementById('masterGroceryList');
+            masterList.innerHTML = '';
+
+            if (!appData.groceries || appData.groceries.length === 0) {
+                masterList.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400">No groceries configured.</td></tr>';
+                return;
+            }
+
+            appData.groceries.forEach(item => {
+                masterList.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-semibold text-gray-800">${item.name}</td>
+                        <td class="p-3"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold">${item.shop}</span></td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteGrocery('${item.id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- DASHBOARD & BUY LOGIC ---
+        function calculateDaysAgo(dateString) {
+            if (!dateString) return 0;
+            const purchasedDate = new Date(dateString);
+            const today = new Date();
+            const diffTime = today - purchasedDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays < 0 ? 0 : diffDays;
+        }
+
+        function toggleReadyToBuy(id) {
+            const item = appData.groceries.find(g => String(g.id) === String(id));
+            if (item) {
+                item.readyToBuy = !item.readyToBuy;
+                saveFirebaseData();
+            }
+        }
+
+        function updatePurchaseInfo(id, newDate, newQty) {
+            const item = appData.groceries.find(g => String(g.id) === String(id));
+            if (item) {
+                if (newDate !== undefined) item.lastPurchasedDate = newDate;
+                if (newQty !== undefined) item.quantity = newQty;
+                item.readyToBuy = false; // Reset ready to buy status after updating
+                saveFirebaseData();
+            }
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboardGroceryList');
+            const searchQuery = document.getElementById('searchGroceryInput').value.toLowerCase().trim();
+            const selectedShop = document.getElementById('filterShopSelect').value;
+            const selectedDays = document.getElementById('filterDaysSelect').value;
+            const sortOrder = document.getElementById('sortDaysSelect').value;
+            const readyOnly = document.getElementById('readyToBuyFilter').checked;
+            const countSpan = document.getElementById('totalItemsCount');
+
+            container.innerHTML = '';
+
+            if (!appData.groceries) appData.groceries = [];
+
+            // 1. Filter items
+            let filtered = appData.groceries.filter(item => {
+                let searchMatch = (searchQuery === '' || item.name.toLowerCase().includes(searchQuery));
+                let shopMatch = (selectedShop === 'ALL' || item.shop === selectedShop);
+                let readyMatch = (!readyOnly || item.readyToBuy === true);
+                
+                let daysAgo = calculateDaysAgo(item.lastPurchasedDate);
+                let daysMatch = true;
+                if (selectedDays === '0-10') {
+                    daysMatch = (daysAgo >= 0 && daysAgo <= 10);
+                } else if (selectedDays !== 'ALL') {
+                    let minDays = parseInt(selectedDays);
+                    daysMatch = (daysAgo > minDays);
+                }
+
+                return searchMatch && shopMatch && readyMatch && daysMatch;
+            });
+
+            // 2. Sort items based on Days Ago
+            filtered.sort((a, b) => {
+                let daysA = calculateDaysAgo(a.lastPurchasedDate);
+                let daysB = calculateDaysAgo(b.lastPurchasedDate);
+
+                if (sortOrder === 'asc') {
+                    return daysA - daysB; // Low to High
+                } else {
+                    return daysB - daysA; // High to Low
+                }
+            });
+
+            countSpan.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-xl border text-gray-400">
+                        <i class="fa-solid fa-box-open text-4xl mb-2"></i>
+                        <p>No groceries found for the selected filter or search query.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                let daysAgo = calculateDaysAgo(item.lastPurchasedDate);
+                let badgeColor = daysAgo > 25 ? 'bg-red-100 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                // Create Card Element safely using DOM APIs
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow-sm border flex flex-col justify-between transition hover:shadow-md";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded">${item.shop}</span>
+                            <label class="flex items-center space-x-1.5 text-xs text-gray-600 cursor-pointer bg-gray-50 px-2 py-1 rounded border">
+                                <input type="checkbox" ${item.readyToBuy ? 'checked' : ''} class="rounded text-blue-600 ready-checkbox">
+                                <span class="font-medium">Ready to Buy</span>
+                            </label>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-1">${item.name}</h4>
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-3">
+                            <span class="px-2 py-0.5 rounded-full text-xs font-bold border ${badgeColor}">
+                                ${daysAgo} Days Ago
+                            </span>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-600"><i class="fa-solid fa-calendar-days mr-1 text-blue-600"></i> Date:</span>
+                            <input type="date" value="${item.lastPurchasedDate}" class="px-2 py-1 border rounded-lg text-xs font-medium outline-none bg-gray-50 focus:ring-1 focus:ring-blue-500 date-input">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-600"><i class="fa-solid fa-sort-numeric-up mr-1 text-emerald-600"></i> Quantity:</span>
+                            <input type="text" value="${item.quantity || ''}" placeholder="e.g. 1 Kg / 2 Pkts" class="px-2 py-1 border rounded-lg text-xs font-medium outline-none bg-gray-50 focus:ring-1 focus:ring-blue-500 w-32 qty-input">
+                        </div>
+                    </div>
+                `;
+
+                // Attach event listeners safely
+                card.querySelector('.ready-checkbox').addEventListener('change', () => {
+                    toggleReadyToBuy(item.id);
+                });
+
+                card.querySelector('.date-input').addEventListener('change', (e) => {
+                    updatePurchaseInfo(item.id, e.target.value, undefined);
+                });
+
+                card.querySelector('.qty-input').addEventListener('input', (e) => {
+                    updatePurchaseInfo(item.id, undefined, e.target.value);
+                });
+
+                container.appendChild(card);
+            });
+        }
     </script>
 </body>
 </html>
