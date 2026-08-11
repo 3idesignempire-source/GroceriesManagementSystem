@@ -10,9 +10,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen">
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col justify-between">
 
-    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 p-4">
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 p-4 absolute inset-0 z-50">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
             <div class="text-center mb-6">
                 <div class="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
@@ -43,7 +43,7 @@
     </div>
 
     <div id="mainApp" class="hidden min-h-screen flex flex-col">
-        <header class="bg-white shadow-md sticky top-0 z-50">
+        <header class="bg-white shadow-md sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
                     <i class="fa-solid fa-basket-shopping text-blue-600 text-2xl"></i>
@@ -169,6 +169,10 @@
             </div>
 
         </main>
+
+        <footer class="bg-white border-t py-4 text-center text-xs text-gray-500 mt-auto">
+            &copy; 2026 3i Design Empire | <a href="https://www.3idesignempire.com" target="_blank" class="text-blue-600 hover:underline">www.3idesignempire.com</a> - All Rights Reserved.
+        </footer>
     </div>
 
     <script>
